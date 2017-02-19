@@ -7,14 +7,15 @@
         <div class="input-group">
           <input type="file" ref="file" class="form-control" @change="handleVideoFileChange">
           <span class="input-group-btn">
-            <button class="btn btn-default" type="button" @click="handleVideoClear">Clear</button>
+            <button class="btn btn-default" type="button" @click="clearSources">Clear</button>
           </span>
         </div>
     </div>
   </div>
-  <div>
-    <video ref="video" @loadedmetadata="handleLoadedMetadata"
+  <div class="media">
+    <video v-show="media === 2" ref="video" @loadedmetadata="handleLoadedMetadata"
       @timeupdate="hanleVideoTimeUpdate" controls></video>
+    <img v-show="media === 1" :width="width" :height="height" ref="image" @load="handleImageLoaded" />
   </div>
   <div style="display: none">
     <canvas :width="width" :height="height" ref="canvas"></canvas>
@@ -25,10 +26,16 @@
 <script>
 import kolor from 'kolor'
 
+let medias = {
+  image: 1,
+  video: 2
+}
+
 export default {
   name: 'player',
   data() {
     return {
+      media: 0,
       width: 100,
       height: 100
     }
@@ -36,7 +43,18 @@ export default {
   methods: {
     handleVideoFileChange({target}) {
       let file = target.files[0]
-      this.$refs.video.src = URL.createObjectURL(file)
+      let objectUrl = URL.createObjectURL(file)
+
+      this.clearSources()
+
+      if (file.type.indexOf('image/') === 0) {
+        this.media = medias.image
+        this.$refs.image.src = objectUrl
+      }
+      else if (file.type.indexOf('video/') === 0) {
+        this.media = medias.video
+        this.$refs.video.src = objectUrl
+      }
     },
 
     handleLoadedMetadata({target}) {
@@ -56,9 +74,20 @@ export default {
       }
     },
 
-    handleVideoClear() {
+    handleImageLoaded({target}) {
+      this.width = target.naturalWidth
+      this.height = target.naturalHeight
+      this.canvasContext = this.$refs.canvas.getContext('2d')
+      this.canvasContext.drawImage(target, 0, 0, this.width, this.height)
+      let imageData = this.canvasContext.getImageData(0, 0, this.width, this.height)
+      this.$emit('changecolor', rgb2hsv(calculateAverageColor(imageData)))
+    },
+
+    clearSources() {
+      this.media = 0
       this.$refs.file.value = ''
       this.$refs.video.src = ''
+      this.$refs.image.src = ''
     }
   }
 }
@@ -99,5 +128,8 @@ function rgb2hsv(rgb) {
 </script>
 
 <style>
-
+.player .media video,
+.player .media img {
+  max-width: 100%;
+}
 </style>

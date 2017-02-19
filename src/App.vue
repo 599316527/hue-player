@@ -49,15 +49,9 @@ import hue from './hue.js'
 import Toast from './Toast.vue'
 import Player from './Player.vue'
 
-let storage
-if (typeof chrome !== 'undefined' && chrome.storage) {
-  storage = chrome.storage.sync || chrome.storage.local;
-}
-else {
-  storage = {
-    get(key) { return localStorage.getItem(key) },
-    set(key, val) { return localStorage.setItem(key, val) }
-  }
+let storage = {
+  get(key) { return localStorage.getItem(key) },
+  set(key, val) { return localStorage.setItem(key, val) }
 }
 
 export default {
